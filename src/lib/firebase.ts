@@ -10,6 +10,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Log the raw environment variables being read by the server for debugging.
+console.log('--- Firebase Config Debug ---');
+console.log('API Key Loaded:', process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Yes' : 'No');
+console.log('Project ID Loaded:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'Yes' : 'No');
+console.log('---------------------------');
+
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
 let firebaseInitializationError: string | null = null;
@@ -18,7 +24,7 @@ const configValues = Object.values(firebaseConfig);
 const missingKeys = Object.keys(firebaseConfig).filter((key, i) => !configValues[i] || String(configValues[i]).includes('YOUR_'));
 
 if (missingKeys.length > 0) {
-  const errorMessage = `Firebase config is incomplete. Missing or placeholder values for: ${missingKeys.map(k => k.replace('NEXT_PUBLIC_', '')).join(', ')}. Please check your .env file.`;
+  const errorMessage = `Firebase config is incomplete. Missing or placeholder values for: ${missingKeys.map(k => k.replace('NEXT_PUBLIC_FIREBASE_', '')).join(', ')}. Please check your .env file.`;
   firebaseInitializationError = errorMessage;
   console.log(errorMessage);
 } else {
