@@ -39,6 +39,12 @@ const FlowOutputSchema = z.object({
 export async function generateLoveLetter(
   input: GenerateLoveLetterInput
 ): Promise<GenerateLoveLetterOutput> {
+  if (!process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY.includes('YOUR_')) {
+    const errorMessage = "The Google AI API key is not configured. Please add it to your .env file and restart the server.";
+    console.error(errorMessage);
+    return { error: errorMessage };
+  }
+
   try {
     const result = await generateLoveLetterFlow(input);
     return { loveLetter: result.loveLetter };
@@ -46,7 +52,7 @@ export async function generateLoveLetter(
     console.error(`Error in generateLoveLetter flow: ${e.message}`, e);
     
     let errorMessage = "Failed to generate love letter due to an internal error.";
-    if (e.message.includes('API key') || e.message.includes('permission')) {
+    if (e.message.includes('API key') || e.message.includes('permission') || e.message.includes('API_KEY_INVALID')) {
         errorMessage = "Failed to generate love letter. Your Google AI API key is invalid or missing. Please check your .env file and restart the server.";
     }
 
