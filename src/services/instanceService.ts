@@ -31,35 +31,45 @@ export async function createInstance(creatorName: string, partnerName:string): P
     }
   };
 
-  const docRef = await addDoc(collection(db, INSTANCES_COLLECTION), newInstanceData);
-  
-  return {
-    ...newInstanceData,
-    id: docRef.id,
-  };
+  try {
+    const docRef = await addDoc(collection(db, INSTANCES_COLLECTION), newInstanceData);
+    
+    return {
+      ...newInstanceData,
+      id: docRef.id,
+    };
+  } catch (error) {
+    console.error('Firestore connection error in createInstance:', error);
+    throw new Error('Failed to create instance. Could not connect to the database. Please check server logs and Firebase configuration.');
+  }
 }
 
 export async function getInstance(id: string): Promise<InstanceData | null> {
   const instanceRef = doc(db, INSTANCES_COLLECTION, id);
-  const docSnap = await getDoc(instanceRef);
+  try {
+    const docSnap = await getDoc(instanceRef);
 
-  if (!docSnap.exists()) {
-    return null;
-  }
-
-  const instance = { id: docSnap.id, ...docSnap.data() } as InstanceData;
-
-  if (instance.completedAt) {
-    const completedDate = new Date(instance.completedAt);
-    const daysSinceCompletion = differenceInDays(new Date(), completedDate);
-
-    if (daysSinceCompletion > 3) {
-      await deleteDoc(instanceRef);
+    if (!docSnap.exists()) {
       return null;
     }
-  }
 
-  return instance;
+    const instance = { id: docSnap.id, ...docSnap.data() } as InstanceData;
+
+    if (instance.completedAt) {
+      const completedDate = new Date(instance.completedAt);
+      const daysSinceCompletion = differenceInDays(new Date(), completedDate);
+
+      if (daysSinceCompletion > 3) {
+        await deleteDoc(instanceRef);
+        return null;
+      }
+    }
+
+    return instance;
+  } catch (error) {
+    console.error('Firestore connection error in getInstance:', error);
+    return null;
+  }
 }
 
 export async function saveLoveLetter(instanceId: string, letter: string): Promise<boolean> {
