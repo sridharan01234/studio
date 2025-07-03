@@ -1,36 +1,37 @@
+
+"use client";
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Heart, Milestone, Puzzle, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Heart, Loader2 } from 'lucide-react';
+import { createInstance } from '@/services/instanceService';
 
-const features = [
-  {
-    title: 'AI Love Letter',
-    description: 'Craft the perfect love letter with the help of AI.',
-    href: '/love-letter',
-    icon: <Sparkles className="h-8 w-8 text-accent" />,
-  },
-  {
-    title: 'Photo Album',
-    description: 'Relive your favorite moments together.',
-    href: '/photo-album',
-    icon: <Camera className="h-8 w-8 text-accent" />,
-  },
-  {
-    title: 'Relationship Timeline',
-    description: 'Visualize the beautiful journey of your love.',
-    href: '/timeline',
-    icon: <Milestone className="h-8 w-8 text-accent" />,
-  },
-  {
-    title: 'Love Quizzes',
-    description: 'Discover more about each other, in a fun way!',
-    href: '/quizzes',
-    icon: <Puzzle className="h-8 w-8 text-accent" />,
-  },
-];
+export default function CreateInstancePage() {
+  const [yourName, setYourName] = useState('');
+  const [partnerName, setPartnerName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-export default function Home() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!yourName || !partnerName) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const newInstance = await createInstance(yourName, partnerName);
+      router.push(`/${newInstance.id}`);
+    } catch (error) {
+      console.error("Failed to create instance", error);
+      // TODO: Add user-facing error handling
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <div className="text-center mb-12">
@@ -41,30 +42,46 @@ export default function Home() {
           LunaLove
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          A special place to celebrate, cherish, and grow your love story. Explore your journey, create new memories, and express your heart.
+          Create a private, digital space to celebrate your unique love story.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 w-full max-w-4xl">
-        {features.map((feature) => (
-          <Card key={feature.title} className="hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-primary/50">
-            <CardHeader className="flex flex-row items-center gap-4">
-              {feature.icon}
-              <div>
-                <CardTitle className="font-headline text-2xl">{feature.title}</CardTitle>
-                <CardDescription className="text-base">{feature.description}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary-foreground">
-                <Link href={feature.href}>
-                  Explore
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card className="w-full max-w-md shadow-2xl">
+        <CardHeader>
+          <CardTitle className="font-headline text-3xl text-center">Start Your Journey</CardTitle>
+          <CardDescription className="text-center">
+            Just enter your names to begin.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="your-name" className="font-headline text-lg">Your Name</Label>
+              <Input
+                id="your-name"
+                placeholder="e.g. Sol"
+                value={yourName}
+                onChange={(e) => setYourName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="partner-name" className="font-headline text-lg">Your Partner's Name</Label>
+              <Input
+                id="partner-name"
+                placeholder="e.g. Luna"
+                value={partnerName}
+                onChange={(e) => setPartnerName(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
+              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              Create Your Love Space
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

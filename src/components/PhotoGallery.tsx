@@ -1,14 +1,10 @@
+
 "use client";
 
 import { useState } from 'react';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-
-type Photo = {
-  src: string;
-  alt: string;
-  hint: string;
-};
+import type { Photo } from '@/types/instance';
 
 type PhotoGalleryProps = {
   photos: Photo[];

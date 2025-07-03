@@ -1,3 +1,4 @@
+
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -20,17 +21,25 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import type { InstanceData } from "@/types/instance";
 
-const menuItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/love-letter", label: "AI Love Letter", icon: Sparkles },
-  { href: "/photo-album", label: "Photo Album", icon: Camera },
-  { href: "/timeline", label: "Timeline", icon: Milestone },
-  { href: "/quizzes", label: "Quizzes", icon: Puzzle },
-];
-
-export default function AppSidebar() {
+export default function AppSidebar({ instance }: { instance: InstanceData }) {
   const pathname = usePathname();
+
+  const menuItems = [
+    { href: `/${instance.id}`, label: "Home", icon: Home },
+    { href: `/${instance.id}/love-letter`, label: "AI Love Letter", icon: Sparkles },
+    { href: `/${instance.id}/photo-album`, label: "Photo Album", icon: Camera },
+    { href: `/${instance.id}/timeline`, label: "Timeline", icon: Milestone },
+    { href: `/${instance.id}/quizzes`, label: "Quizzes", icon: Puzzle },
+  ];
+
+  const getDisplayName = () => {
+    if (instance.creatorName && instance.partnerName) {
+      return `${instance.creatorName.charAt(0).toUpperCase()} & ${instance.partnerName.charAt(0).toUpperCase()}`
+    }
+    return "LunaLove"
+  }
 
   return (
     <Sidebar
@@ -39,10 +48,10 @@ export default function AppSidebar() {
       className="hidden md:flex bg-card border-r"
     >
       <SidebarHeader>
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href={`/${instance.id}`} className="flex items-center gap-2.5">
           <Heart className="w-8 h-8 text-primary" />
           <span className="font-headline text-2xl font-semibold text-foreground group-data-[collapsible=icon]:hidden">
-            LunaLove
+            {getDisplayName()}
           </span>
         </Link>
       </SidebarHeader>

@@ -1,10 +1,14 @@
+
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { generateLoveLetter } from "@/ai/flows/generate-love-letter";
+import type { InstanceData } from "@/types/instance";
+import { saveLoveLetter } from "@/services/instanceService";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,16 +40,17 @@ const formSchema = z.object({
   tone: z.enum(['romantic', 'humorous', 'passionate', 'sentimental']),
 });
 
-export default function LoveLetterForm() {
+export default function LoveLetterForm({ instance }: { instance: InstanceData }) {
   const [loveLetter, setLoveLetter] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      recipientName: "",
-      senderName: "",
+      recipientName: instance.partnerName || "",
+      senderName: instance.creatorName || "",
       relationshipDetails: "",
       tone: "romantic",
     },
@@ -57,6 +62,9 @@ export default function LoveLetterForm() {
     try {
       const result = await generateLoveLetter(values);
       setLoveLetter(result.loveLetter);
+      await saveLoveLetter(instance.id, result.loveLetter);
+      // Refresh the page to show the new letter in the list
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast({
@@ -155,7 +163,7 @@ export default function LoveLetterForm() {
                 ) : (
                   <Sparkles className="mr-2 h-5 w-5" />
                 )}
-                {isLoading ? "Crafting Your Letter..." : "Generate Love Letter"}
+                {isLoading ? "Crafting Your Letter..." : "Generate & Save Letter"}
               </Button>
             </form>
           </Form>
@@ -165,7 +173,7 @@ export default function LoveLetterForm() {
       {loveLetter && (
         <Card className="mt-12 shadow-lg border-2 border-primary/50 animate-in fade-in-50 duration-1000">
           <CardHeader>
-            <CardTitle className="font-headline text-3xl text-center text-primary">Your Letter</CardTitle>
+            <CardTitle className="font-headline text-3xl text-center text-primary">Your Newly Generated Letter</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="prose-lg max-w-none text-gray-700 whitespace-pre-wrap p-4 bg-primary/5 rounded-lg">

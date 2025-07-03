@@ -1,9 +1,8 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/AppSidebar';
 
 export const metadata: Metadata = {
   title: 'LunaLove',
@@ -26,13 +25,8 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased min-h-screen')} suppressHydrationWarning>
-        <SidebarProvider>
-          <div className="flex h-full w-full">
-            <AppSidebar />
-            <main className="flex-1 overflow-y-auto">{children}</main>
-          </div>
-          <Toaster />
-        </SidebarProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );
