@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Milestone, Gift, Plane, Ring, Home, Heart } from 'lucide-react';
+import { Milestone, Gift, Plane, Diamond, Home, Heart } from 'lucide-react';
 
 const timelineEvents = [
   {
@@ -30,7 +30,7 @@ const timelineEvents = [
     date: 'July 20, 2023',
     title: 'The Proposal',
     description: 'Under a sky full of stars, we decided on forever. A moment of pure magic and happiness.',
-    icon: <Ring className="h-6 w-6 text-primary" />,
+    icon: <Diamond className="h-6 w-6 text-primary" />,
   },
 ];
 
