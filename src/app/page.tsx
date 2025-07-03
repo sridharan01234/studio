@@ -26,12 +26,12 @@ export default function CreateInstancePage() {
     }
     setIsLoading(true);
     
-    const newInstance = await createInstance(yourName, partnerName);
+    const { data: newInstance, error: creationError } = await createInstance(yourName, partnerName);
 
     if (newInstance) {
       router.push(`/${newInstance.id}`);
     } else {
-      setError("Could not connect to the database. Please make sure your Firebase credentials in the .env file are correct and that you've restarted the server.");
+      setError(creationError || "An unknown error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -83,7 +83,7 @@ export default function CreateInstancePage() {
             {error && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Database Connection Failed</AlertTitle>
+                    <AlertTitle>Connection Failed</AlertTitle>
                     <AlertDescription>
                         {error}
                     </AlertDescription>

@@ -2,7 +2,7 @@
 'use server';
 
 import type { InstanceData, Checklist, TimelineEvent, Photo } from '@/types/instance';
-import { db } from '@/lib/firebase';
+import { db, firebaseInitializationError } from '@/lib/firebase';
 import {
   collection,
   doc,
@@ -16,36 +16,41 @@ import { differenceInDays } from 'date-fns';
 
 const INSTANCES_COLLECTION = 'instances';
 
-export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData | null> {
-  if (!db) {
-    console.error("Firestore is not initialized. Cannot create instance.");
-    return null;
-  }
-  const newInstanceData = {
-    creatorName,
-    partnerName,
-    loveLetters: [],
-    photos: [],
-    timelineEvents: [],
-    checklist: {
-      loveLetter: false,
-      photoAlbum: false,
-      timeline: false,
-      quiz: false,
+export async function createInstance(creatorName: string, partnerName:string): Promise<{ data: InstanceData | null; error: string | null }> {
+    if (firebaseInitializationError) {
+        return { data: null, error: firebaseInitializationError };
     }
-  };
+    if (!db) {
+        return { data: null, error: "Database not initialized. Please check server logs for Firebase configuration errors." };
+    }
 
-  try {
-    const docRef = await addDoc(collection(db, INSTANCES_COLLECTION), newInstanceData);
-    
-    return {
-      ...newInstanceData,
-      id: docRef.id,
+    const newInstanceData = {
+        creatorName,
+        partnerName,
+        loveLetters: [],
+        photos: [],
+        timelineEvents: [],
+        checklist: {
+        loveLetter: false,
+        photoAlbum: false,
+        timeline: false,
+        quiz: false,
+        }
     };
-  } catch (error) {
-    console.error('Firestore connection error in createInstance:', error);
-    return null;
-  }
+
+    try {
+        const docRef = await addDoc(collection(db, INSTANCES_COLLECTION), newInstanceData);
+        
+        const instance = {
+        ...newInstanceData,
+        id: docRef.id,
+        };
+        return { data: instance, error: null };
+
+    } catch (error: any) {
+        console.error('Firestore connection error in createInstance:', error);
+        return { data: null, error: `Could not connect to the database. This might be a network issue or a problem with your Firestore Security Rules. Original error: ${error.message}` };
+    }
 }
 
 export async function getInstance(id: string): Promise<InstanceData | null> {

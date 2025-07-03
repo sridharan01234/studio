@@ -12,22 +12,23 @@ const firebaseConfig = {
 
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
+let firebaseInitializationError: string | null = null;
 
-// Check that all config values are present before initializing
-if (Object.values(firebaseConfig).every((v) => v)) {
+const configValues = Object.values(firebaseConfig);
+const missingKeys = Object.keys(firebaseConfig).filter((key, i) => !configValues[i] || String(configValues[i]).includes('YOUR_'));
+
+if (missingKeys.length > 0) {
+  const errorMessage = `Firebase config is incomplete. Missing or placeholder values for: ${missingKeys.map(k => k.replace('NEXT_PUBLIC_', '')).join(', ')}. Please check your .env file.`;
+  firebaseInitializationError = errorMessage;
+  console.log(errorMessage);
+} else {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     db = getFirestore(app);
-  } catch (e) {
-    console.error('Failed to initialize Firebase', e);
+  } catch (e: any) {
+    firebaseInitializationError = `Failed to initialize Firebase: ${e.message}`;
+    console.error(firebaseInitializationError, e);
   }
-} else {
-  // This message will be logged on the server when server actions are called
-  // or when server components are rendered. This is not an error, but a
-  // state that the app can be in if the developer hasn't configured Firebase yet.
-  console.log(
-    'Firebase config is not set. App will run without database connectivity.'
-  );
 }
 
-export { db };
+export { db, firebaseInitializationError };
