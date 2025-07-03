@@ -48,6 +48,9 @@ export async function generateLoveLetter(
 
   try {
     const result = await generateLoveLetterFlow(input);
+     if (!result?.loveLetter) {
+        throw new Error("The AI model returned an empty or invalid response. This can happen due to the content safety policy or a problem with the prompt.");
+    }
     return { loveLetter: result.loveLetter };
   } catch (e: unknown) {
     // Log the detailed error to the server console for debugging.
@@ -55,17 +58,18 @@ export async function generateLoveLetter(
 
     // Provide a more helpful error to the client.
     let errorMessage = "Failed to generate love letter. An unknown error occurred.";
-    if (e && typeof e === 'object' && 'message' in e) {
-        const message = String(e.message);
+    if (e instanceof Error) {
+        const message = e.message;
         if (message.includes('API_KEY_INVALID') || message.includes('permission denied')) {
             errorMessage = "Failed to generate love letter. Your Google AI API key is likely invalid or missing required permissions.";
         } else if (message.includes('deadline')) {
             errorMessage = "Failed to generate love letter. The request timed out. Please try again.";
         } else {
-            errorMessage = `Failed to generate love letter. Details: ${message.substring(0, 100)}`;
+             // Use the full error message from the thrown Error object.
+            errorMessage = `Failed to generate love letter: ${message}`;
         }
     } else if (typeof e === 'string') {
-        errorMessage = `Failed to generate love letter. Details: ${e.substring(0, 100)}`;
+        errorMessage = `Failed to generate love letter. Details: ${e.substring(0, 150)}`;
     }
     
     errorMessage += ' Please check the server logs for more information.';
@@ -95,6 +99,9 @@ const generateLoveLetterFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The AI model did not return a valid output. This may be due to a content safety policy or a problem with the prompt.");
+    }
+    return output;
   }
 );
