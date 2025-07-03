@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -50,6 +49,8 @@ export default function CreateInstancePage() {
         </p>
       </div>
 
+      <p className="text-center text-xs text-red-500 font-mono my-4">DEBUG: Project ID is: {process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'NOT LOADED'}</p>
+
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-center">Start Your Journey</CardTitle>
@@ -85,7 +86,7 @@ export default function CreateInstancePage() {
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Connection Failed</AlertTitle>
                     <AlertDescription>
-                        {error}
+                        {error} Please ensure the .env file is correct and that you have restarted the server.
                     </AlertDescription>
                 </Alert>
             )}
