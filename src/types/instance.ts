@@ -32,5 +32,6 @@ export const InstanceDataSchema = z.object({
   photos: z.array(PhotoSchema).optional(),
   timelineEvents: z.array(TimelineEventSchema).optional(),
   checklist: ChecklistSchema.optional(),
+  completedAt: z.string().optional(),
 });
 export type InstanceData = z.infer<typeof InstanceDataSchema>;

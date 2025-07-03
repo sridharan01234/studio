@@ -2,21 +2,27 @@
 'use server';
 
 import type { InstanceData, Checklist, TimelineEvent, Photo } from '@/types/instance';
+import { db } from '@/lib/firebase';
+import {
+  collection,
+  doc,
+  addDoc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  arrayUnion,
+} from 'firebase/firestore';
+import { differenceInDays } from 'date-fns';
 
-// In-memory store (for prototyping purposes, data will be lost on server restart)
-const instances = new Map<string, InstanceData>();
+const INSTANCES_COLLECTION = 'instances';
 
 export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData> {
-  const id = crypto.randomUUID().slice(0, 8);
-  
-  // Start with empty data for the new instance
-  const newInstance: InstanceData = {
-    id,
+  const newInstanceData = {
     creatorName,
     partnerName,
     loveLetters: [],
-    photos: [], // Start with empty photos
-    timelineEvents: [], // Start with empty timeline
+    photos: [],
+    timelineEvents: [],
     checklist: {
       loveLetter: false,
       photoAlbum: false,
@@ -25,69 +31,109 @@ export async function createInstance(creatorName: string, partnerName:string): P
     }
   };
 
-  instances.set(id, newInstance);
-  return newInstance;
+  const docRef = await addDoc(collection(db, INSTANCES_COLLECTION), newInstanceData);
+  
+  return {
+    ...newInstanceData,
+    id: docRef.id,
+  };
 }
 
 export async function getInstance(id: string): Promise<InstanceData | null> {
-  if (!instances.has(id)) {
+  const instanceRef = doc(db, INSTANCES_COLLECTION, id);
+  const docSnap = await getDoc(instanceRef);
+
+  if (!docSnap.exists()) {
     return null;
   }
-  return instances.get(id)!;
+
+  const instance = { id: docSnap.id, ...docSnap.data() } as InstanceData;
+
+  if (instance.completedAt) {
+    const completedDate = new Date(instance.completedAt);
+    const daysSinceCompletion = differenceInDays(new Date(), completedDate);
+
+    if (daysSinceCompletion > 3) {
+      await deleteDoc(instanceRef);
+      return null;
+    }
+  }
+
+  return instance;
 }
 
 export async function saveLoveLetter(instanceId: string, letter: string): Promise<boolean> {
-  const instance = await getInstance(instanceId);
-  if (!instance) return false;
-
-  if (!instance.loveLetters) {
-    instance.loveLetters = [];
+  const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
+  try {
+    await updateDoc(instanceRef, {
+      loveLetters: arrayUnion(letter),
+      'checklist.loveLetter': true,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error saving love letter: ", error);
+    return false;
   }
-  instance.loveLetters.push(letter);
-  if (instance.checklist) {
-    instance.checklist.loveLetter = true;
-  }
-  instances.set(instanceId, instance);
-  return true;
 }
 
 export async function updateChecklistItem(instanceId: string, item: keyof Checklist): Promise<boolean> {
-    const instance = await getInstance(instanceId);
-    if (!instance || !instance.checklist) return false;
+    const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
+    try {
+        const docSnap = await getDoc(instanceRef);
+        if (!docSnap.exists()) return false;
 
-    if (instance.checklist[item] === false) {
-      instance.checklist[item] = true;
-      instances.set(instanceId, instance);
+        const instance = docSnap.data() as InstanceData;
+        const currentChecklist = instance.checklist || { loveLetter: false, photoAlbum: false, timeline: false, quiz: false };
+        
+        if (currentChecklist[item]) {
+          return true;
+        }
+        
+        const updatedChecklist = { ...currentChecklist, [item]: true };
+        
+        const updatePayload: { [key: string]: any } = {
+            checklist: updatedChecklist
+        };
+        
+        const allComplete = Object.values(updatedChecklist).every(Boolean);
+
+        if (allComplete) {
+            updatePayload.completedAt = new Date().toISOString();
+        }
+
+        await updateDoc(instanceRef, updatePayload);
+        return true;
+
+    } catch (error) {
+        console.error("Error updating checklist item: ", error);
+        return false;
     }
-    return true;
 }
 
 export async function addTimelineEvent(instanceId: string, event: TimelineEvent): Promise<boolean> {
-  const instance = await getInstance(instanceId);
-  if (!instance) return false;
-
-  if (!instance.timelineEvents) {
-    instance.timelineEvents = [];
+  const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
+  try {
+    await updateDoc(instanceRef, {
+      timelineEvents: arrayUnion(event),
+      'checklist.timeline': true,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error adding timeline event: ", error);
+    return false;
   }
-  instance.timelineEvents.push(event);
-  if (instance.checklist) {
-    instance.checklist.timeline = true;
-  }
-  instances.set(instanceId, instance);
-  return true;
 }
 
 export async function addPhoto(instanceId: string, photo: Photo): Promise<boolean> {
-  const instance = await getInstance(instanceId);
-  if (!instance) return false;
-
-  if (!instance.photos) {
-    instance.photos = [];
+  const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
+  try {
+    await updateDoc(instanceRef, {
+      photos: arrayUnion(photo),
+      'checklist.photoAlbum': true,
+    });
+    return true;
+  } catch (error) {
+    console.error("Error adding photo: ", error);
+    return false;
   }
-  instance.photos.push(photo);
-  if (instance.checklist) {
-    instance.checklist.photoAlbum = true;
-  }
-  instances.set(instanceId, instance);
-  return true;
 }
