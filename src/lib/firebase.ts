@@ -1,5 +1,5 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,8 +10,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+
+// Check that all config values are present before initializing
+if (Object.values(firebaseConfig).every((v) => v)) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+  } catch (e) {
+    console.error('Failed to initialize Firebase', e);
+  }
+} else {
+  // This message will be logged on the server when server actions are called
+  // or when server components are rendered. This is not an error, but a
+  // state that the app can be in if the developer hasn't configured Firebase yet.
+  console.log(
+    'Firebase config is not set. App will run without database connectivity.'
+  );
+}
 
 export { db };

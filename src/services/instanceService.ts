@@ -17,6 +17,10 @@ import { differenceInDays } from 'date-fns';
 const INSTANCES_COLLECTION = 'instances';
 
 export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData | null> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot create instance.");
+    return null;
+  }
   const newInstanceData = {
     creatorName,
     partnerName,
@@ -45,6 +49,10 @@ export async function createInstance(creatorName: string, partnerName:string): P
 }
 
 export async function getInstance(id: string): Promise<InstanceData | null> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot get instance.");
+    return null;
+  }
   const instanceRef = doc(db, INSTANCES_COLLECTION, id);
   try {
     const docSnap = await getDoc(instanceRef);
@@ -73,6 +81,10 @@ export async function getInstance(id: string): Promise<InstanceData | null> {
 }
 
 export async function saveLoveLetter(instanceId: string, letter: string): Promise<boolean> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot save love letter.");
+    return false;
+  }
   const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
   try {
     await updateDoc(instanceRef, {
@@ -87,6 +99,10 @@ export async function saveLoveLetter(instanceId: string, letter: string): Promis
 }
 
 export async function updateChecklistItem(instanceId: string, item: keyof Checklist): Promise<boolean> {
+    if (!db) {
+      console.error("Firestore is not initialized. Cannot update checklist.");
+      return false;
+    }
     const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
     try {
         const docSnap = await getDoc(instanceRef);
@@ -121,6 +137,10 @@ export async function updateChecklistItem(instanceId: string, item: keyof Checkl
 }
 
 export async function addTimelineEvent(instanceId: string, event: TimelineEvent): Promise<boolean> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot add timeline event.");
+    return false;
+  }
   const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
   try {
     await updateDoc(instanceRef, {
@@ -128,13 +148,18 @@ export async function addTimelineEvent(instanceId: string, event: TimelineEvent)
       'checklist.timeline': true,
     });
     return true;
-  } catch (error) {
+  } catch (error)
+ {
     console.error("Error adding timeline event: ", error);
     return false;
   }
 }
 
 export async function addPhoto(instanceId: string, photo: Photo): Promise<boolean> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot add photo.");
+    return false;
+  }
   const instanceRef = doc(db, INSTANCES_COLLECTION, instanceId);
   try {
     await updateDoc(instanceRef, {
