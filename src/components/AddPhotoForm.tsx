@@ -30,7 +30,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 
 const formSchema = z.object({
-  src: z.string().url('Please enter a valid image URL.'),
   alt: z.string().min(1, 'Description is required.'),
   hint: z.string().optional(),
 });
@@ -44,7 +43,6 @@ export function AddPhotoForm({ instanceId }: { instanceId: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      src: '',
       alt: '',
       hint: '',
     },
@@ -53,7 +51,11 @@ export function AddPhotoForm({ instanceId }: { instanceId: string }) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
+      const width = Math.floor(Math.random() * 200) + 600; // 600 to 800
+      const height = Math.floor(Math.random() * 200) + 600; // 600 to 800
+      
       const photoData = {
+          src: `https://placehold.co/${width}x${height}.png`,
           ...values,
           hint: values.hint || values.alt.split(' ').slice(0, 2).join(' '),
       }
@@ -89,24 +91,11 @@ export function AddPhotoForm({ instanceId }: { instanceId: string }) {
         <DialogHeader>
           <DialogTitle>Add a new photo</DialogTitle>
           <DialogDescription>
-            Enter the URL of an image and a description for your memory.
+            Add a description for your memory. We'll generate a placeholder image for you.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="src"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/photo.jpg" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="alt"
