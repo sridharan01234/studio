@@ -7,42 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Heart, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Heart, Loader2, AlertCircle } from 'lucide-react';
 import { createInstance } from '@/services/instanceService';
-import { useToast } from '@/hooks/use-toast';
 
 export default function CreateInstancePage() {
   const [yourName, setYourName] = useState('');
   const [partnerName, setPartnerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!yourName || !partnerName) {
       return;
     }
     setIsLoading(true);
-    try {
-      const newInstance = await createInstance(yourName, partnerName);
-      if (newInstance) {
-        router.push(`/${newInstance.id}`);
-      } else {
-        toast({
-          title: 'Database Connection Failed',
-          description: "Could not connect to the database. Please make sure your Firebase credentials in the .env file are correct and that you've restarted the server.",
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Failed to create instance", error);
-      toast({
-          title: 'An Error Occurred',
-          description: 'Something went wrong. Please try again later.',
-          variant: 'destructive',
-      });
+    
+    const newInstance = await createInstance(yourName, partnerName);
+
+    if (newInstance) {
+      router.push(`/${newInstance.id}`);
+    } else {
+      setError("Could not connect to the database. Please make sure your Firebase credentials in the .env file are correct and that you've restarted the server.");
       setIsLoading(false);
     }
   };
@@ -90,6 +79,17 @@ export default function CreateInstancePage() {
                 required
               />
             </div>
+            
+            {error && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Database Connection Failed</AlertTitle>
+                    <AlertDescription>
+                        {error}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             <Button type="submit" disabled={isLoading} className="w-full text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
               {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
               Create Your Love Space
