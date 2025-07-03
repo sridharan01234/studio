@@ -49,26 +49,26 @@ export async function generateLoveLetter(
   try {
     const result = await generateLoveLetterFlow(input);
     return { loveLetter: result.loveLetter };
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Log the detailed error to the server console for debugging.
     console.error("An error occurred in the generateLoveLetter flow:", e);
 
     // Provide a more helpful error to the client.
-    const baseMessage = "Failed to generate love letter.";
-    let details = "An internal server error occurred.";
-
-    if (e.message) {
-        if (e.message.includes('API_KEY_INVALID') || e.message.includes('permission denied')) {
-            details = "Your Google AI API key is likely invalid or missing required permissions.";
-        } else if (e.message.includes('deadline')) {
-            details = "The request timed out. Please try again.";
+    let errorMessage = "Failed to generate love letter. An unknown error occurred.";
+    if (e && typeof e === 'object' && 'message' in e) {
+        const message = String(e.message);
+        if (message.includes('API_KEY_INVALID') || message.includes('permission denied')) {
+            errorMessage = "Failed to generate love letter. Your Google AI API key is likely invalid or missing required permissions.";
+        } else if (message.includes('deadline')) {
+            errorMessage = "Failed to generate love letter. The request timed out. Please try again.";
         } else {
-            // Send a snippet of the original error message for context, but keep it brief.
-            details = `Details: ${e.message.substring(0, 100)}`;
+            errorMessage = `Failed to generate love letter. Details: ${message.substring(0, 100)}`;
         }
+    } else if (typeof e === 'string') {
+        errorMessage = `Failed to generate love letter. Details: ${e.substring(0, 100)}`;
     }
     
-    const errorMessage = `${baseMessage} ${details} Please check the server logs for more information.`;
+    errorMessage += ' Please check the server logs for more information.';
     return { error: errorMessage };
   }
 }
