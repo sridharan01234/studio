@@ -39,6 +39,7 @@ const FlowOutputSchema = z.object({
 export async function generateLoveLetter(
   input: GenerateLoveLetterInput
 ): Promise<GenerateLoveLetterOutput> {
+  // This is the most common error. Check it first and give a clear message.
   if (!process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY.includes('YOUR_')) {
     const errorMessage = "The Google AI API key is not configured. Please add it to your .env file and restart the server.";
     console.error(errorMessage);
@@ -49,13 +50,25 @@ export async function generateLoveLetter(
     const result = await generateLoveLetterFlow(input);
     return { loveLetter: result.loveLetter };
   } catch (e: any) {
-    console.error(`Error in generateLoveLetter flow: ${e.message}`, e);
-    
-    let errorMessage = "Failed to generate love letter due to an internal error.";
-    if (e.message.includes('API key') || e.message.includes('permission') || e.message.includes('API_KEY_INVALID')) {
-        errorMessage = "Failed to generate love letter. Your Google AI API key is invalid or missing. Please check your .env file and restart the server.";
-    }
+    // Log the detailed error to the server console for debugging.
+    console.error("An error occurred in the generateLoveLetter flow:", e);
 
+    // Provide a more helpful error to the client.
+    const baseMessage = "Failed to generate love letter.";
+    let details = "An internal server error occurred.";
+
+    if (e.message) {
+        if (e.message.includes('API_KEY_INVALID') || e.message.includes('permission denied')) {
+            details = "Your Google AI API key is likely invalid or missing required permissions.";
+        } else if (e.message.includes('deadline')) {
+            details = "The request timed out. Please try again.";
+        } else {
+            // Send a snippet of the original error message for context, but keep it brief.
+            details = `Details: ${e.message.substring(0, 100)}`;
+        }
+    }
+    
+    const errorMessage = `${baseMessage} ${details} Please check the server logs for more information.`;
     return { error: errorMessage };
   }
 }
