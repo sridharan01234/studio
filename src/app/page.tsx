@@ -30,8 +30,8 @@ export default function CreateInstancePage() {
         router.push(`/${newInstance.id}`);
       } else {
         toast({
-          title: 'Creation Failed',
-          description: 'Could not connect to the database. Please check your connection and Firebase setup.',
+          title: 'Database Connection Failed',
+          description: "Could not connect to the database. Please make sure your Firebase credentials in the .env file are correct and that you've restarted the server.",
           variant: 'destructive',
         });
         setIsLoading(false);
