@@ -6,13 +6,17 @@ import Link from 'next/link';
 import { getInstance } from '@/services/instanceService';
 import { notFound } from 'next/navigation';
 import CompletionChecklist from '@/components/CompletionChecklist';
+import ShareCard from '@/components/ShareCard';
 
-export default async function InstanceHomePage({ params }: { params: { instanceId: string } }) {
+export default async function InstanceHomePage({ params, searchParams }: { params: { instanceId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
   const instance = await getInstance(params.instanceId);
+  const isPartnerView = searchParams.partner === 'true';
 
   if (!instance) {
     notFound();
   }
+
+  const isComplete = instance.checklist && Object.values(instance.checklist).every(Boolean);
   
   const features = [
     {
@@ -23,13 +27,13 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
     },
     {
       title: 'Photo Album',
-      description: 'Relive your favorite moments together.',
+      description: 'Create a gallery of your favorite moments.',
       href: `/${instance.id}/photo-album`,
       icon: <Camera className="h-8 w-8 text-accent" />,
     },
     {
       title: 'Relationship Timeline',
-      description: 'Visualize the beautiful journey of your love.',
+      description: 'Build a beautiful journey of your love.',
       href: `/${instance.id}/timeline`,
       icon: <Milestone className="h-8 w-8 text-accent" />,
     },
@@ -41,6 +45,10 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
     },
   ];
 
+  const getHref = (baseHref: string) => {
+    return isPartnerView ? `${baseHref}?partner=true` : baseHref;
+  }
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 md:p-8">
       <div className="text-center my-12">
@@ -51,13 +59,22 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
           {instance.creatorName} & {instance.partnerName}
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          A special place to celebrate, cherish, and grow your love story. Explore your journey, create new memories, and express your heart.
+          {isPartnerView
+            ? `Welcome! ${instance.creatorName} has prepared this special place just for you.`
+            : 'A special place to celebrate, cherish, and grow your love story. Explore your journey, create new memories, and express your heart.'
+          }
         </p>
       </div>
 
-      <div className="w-full max-w-4xl mb-12">
-        <CompletionChecklist checklist={instance.checklist} />
-      </div>
+      {!isPartnerView && (
+        <div className="w-full max-w-4xl mb-12">
+           {isComplete ? (
+             <ShareCard instanceId={instance.id} />
+          ) : (
+            <CompletionChecklist checklist={instance.checklist} />
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 w-full max-w-4xl">
         {features.map((feature) => (
@@ -71,7 +88,7 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
             </CardHeader>
             <CardContent>
               <Button asChild variant="outline" className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary-foreground">
-                <Link href={feature.href}>
+                <Link href={getHref(feature.href)}>
                   Explore
                 </Link>
               </Button>

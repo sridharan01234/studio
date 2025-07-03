@@ -1,7 +1,7 @@
-
 'use server';
 
-import type { InstanceData, Checklist } from '@/types/instance';
+import type { InstanceData, Checklist, TimelineEvent, Photo } from '@/types/instance';
+import { revalidatePath } from 'next/cache';
 
 // In-memory store (for prototyping purposes, data will be lost on server restart)
 const instances = new Map<string, InstanceData>();
@@ -9,24 +9,14 @@ const instances = new Map<string, InstanceData>();
 export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData> {
   const id = crypto.randomUUID().slice(0, 8);
   
-  // Start with default data for the new instance
+  // Start with empty data for the new instance
   const newInstance: InstanceData = {
     id,
     creatorName,
     partnerName,
-    photos: [
-      { src: 'https://placehold.co/600x800.png', alt: 'A romantic moment under the stars.', hint: 'couple stars' },
-      { src: 'https://placehold.co/800x600.png', alt: 'Laughing together on a sunny afternoon.', hint: 'couple laughing' },
-      { src: 'https://placehold.co/600x600.png', alt: 'A cozy selfie.', hint: 'couple selfie' },
-      { src: 'https://placehold.co/600x900.png', alt: 'Walking hand in hand on the beach.', hint: 'couple beach' },
-    ],
-    timelineEvents: [
-      { date: 'June 12, 2021', title: 'Our First Date', description: 'A coffee date that turned into a five-hour conversation.', icon: 'Heart' },
-      { date: 'September 3, 2021', title: 'First Trip Together', description: 'Our weekend getaway to the coast.', icon: 'Plane' },
-      { date: 'December 25, 2021', title: 'First Holiday', description: 'Exchanging gifts and starting our own traditions.', icon: 'Gift' },
-      { date: 'May 1, 2022', title: 'Moved In Together', description: 'Turning a house into a home.', icon: 'Home' },
-      { date: 'July 20, 2023', title: 'The Proposal', description: 'Under a sky full of stars, we decided on forever.', icon: 'Diamond' },
-    ],
+    loveLetters: [],
+    photos: [], // Start with empty photos
+    timelineEvents: [], // Start with empty timeline
     checklist: {
       loveLetter: false,
       photoAlbum: false,
@@ -58,6 +48,8 @@ export async function saveLoveLetter(instanceId: string, letter: string): Promis
     instance.checklist.loveLetter = true;
   }
   instances.set(instanceId, instance);
+  revalidatePath(`/${instanceId}/love-letter`);
+  revalidatePath(`/${instanceId}`);
   return true;
 }
 
@@ -69,5 +61,40 @@ export async function updateChecklistItem(instanceId: string, item: keyof Checkl
       instance.checklist[item] = true;
       instances.set(instanceId, instance);
     }
+    revalidatePath(`/${instanceId}`);
     return true;
+}
+
+export async function addTimelineEvent(instanceId: string, event: TimelineEvent): Promise<boolean> {
+  const instance = await getInstance(instanceId);
+  if (!instance) return false;
+
+  if (!instance.timelineEvents) {
+    instance.timelineEvents = [];
+  }
+  instance.timelineEvents.push(event);
+  if (instance.checklist) {
+    instance.checklist.timeline = true;
+  }
+  instances.set(instanceId, instance);
+  revalidatePath(`/${instanceId}/timeline`);
+  revalidatePath(`/${instanceId}`);
+  return true;
+}
+
+export async function addPhoto(instanceId: string, photo: Photo): Promise<boolean> {
+  const instance = await getInstance(instanceId);
+  if (!instance) return false;
+
+  if (!instance.photos) {
+    instance.photos = [];
+  }
+  instance.photos.push(photo);
+  if (instance.checklist) {
+    instance.checklist.photoAlbum = true;
+  }
+  instances.set(instanceId, instance);
+  revalidatePath(`/${instanceId}/photo-album`);
+  revalidatePath(`/${instanceId}`);
+  return true;
 }

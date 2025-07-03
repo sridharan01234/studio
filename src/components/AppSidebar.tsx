@@ -1,7 +1,7 @@
 
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Sidebar,
   SidebarHeader,
@@ -25,6 +25,8 @@ import type { InstanceData } from "@/types/instance";
 
 export default function AppSidebar({ instance }: { instance: InstanceData }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isPartnerView = searchParams.get('partner') === 'true';
 
   const menuItems = [
     { href: `/${instance.id}`, label: "Home", icon: Home },
@@ -40,6 +42,10 @@ export default function AppSidebar({ instance }: { instance: InstanceData }) {
     }
     return "LunaLove"
   }
+  
+  const getHref = (baseHref: string) => {
+    return isPartnerView ? `${baseHref}?partner=true` : baseHref;
+  }
 
   return (
     <Sidebar
@@ -48,7 +54,7 @@ export default function AppSidebar({ instance }: { instance: InstanceData }) {
       className="hidden md:flex bg-card border-r"
     >
       <SidebarHeader>
-        <Link href={`/${instance.id}`} className="flex items-center gap-2.5">
+        <Link href={getHref(`/${instance.id}`)} className="flex items-center gap-2.5">
           <Heart className="w-8 h-8 text-primary" />
           <span className="font-headline text-2xl font-semibold text-foreground group-data-[collapsible=icon]:hidden">
             {getDisplayName()}
@@ -67,7 +73,7 @@ export default function AppSidebar({ instance }: { instance: InstanceData }) {
                 "aria-[current=page]:bg-primary/20 aria-[current=page]:text-primary-foreground"
               )}
             >
-              <Link href={item.href}>
+              <Link href={getHref(item.href)}>
                 <item.icon className="h-5 w-5" />
                 <span className="group-data-[collapsible=icon]:hidden">
                   {item.label}
