@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -7,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Award, Gift, Handshake, MessageSquare, Clock, Repeat, Heart } from 'lucide-react';
+import { updateChecklistItem } from '@/services/instanceService';
 
 const quizQuestions = [
   {
@@ -60,7 +62,7 @@ const loveLanguageIcons: { [key: string]: JSX.Element } = {
 };
 
 
-export default function InteractiveQuiz() {
+export default function InteractiveQuiz({ instanceId }: { instanceId: string }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -70,12 +72,14 @@ export default function InteractiveQuiz() {
 
   const handleNext = () => {
     if (selectedAnswer) {
-      setAnswers([...answers, selectedAnswer]);
+      const newAnswers = [...answers, selectedAnswer]
+      setAnswers(newAnswers);
       if (currentQuestionIndex < quizQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setSelectedAnswer(null);
       } else {
         setShowResults(true);
+        updateChecklistItem(instanceId, 'quiz');
       }
     }
   };
@@ -89,9 +93,14 @@ export default function InteractiveQuiz() {
   
   const calculateResults = () => {
     const counts: {[key: string]: number} = {};
+    // Note: answers state might not be updated yet when this is called in the same render cycle
+    // as setShowResults(true), so we use the `newAnswers` from handleNext logic if we were to calculate
+    // it there. Here, we can rely on the final answer being in selectedAnswer.
     const finalAnswers = [...answers, selectedAnswer];
     finalAnswers.forEach(answer => {
-      counts[answer!] = (counts[answer!] || 0) + 1;
+      if (answer) {
+        counts[answer] = (counts[answer] || 0) + 1;
+      }
     });
     return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
   };

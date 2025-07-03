@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { InstanceData } from '@/types/instance';
+import type { InstanceData, Checklist } from '@/types/instance';
 
 // In-memory store (for prototyping purposes, data will be lost on server restart)
 const instances = new Map<string, InstanceData>();
@@ -26,7 +26,13 @@ export async function createInstance(creatorName: string, partnerName:string): P
       { date: 'December 25, 2021', title: 'First Holiday', description: 'Exchanging gifts and starting our own traditions.', icon: 'Gift' },
       { date: 'May 1, 2022', title: 'Moved In Together', description: 'Turning a house into a home.', icon: 'Home' },
       { date: 'July 20, 2023', title: 'The Proposal', description: 'Under a sky full of stars, we decided on forever.', icon: 'Diamond' },
-    ]
+    ],
+    checklist: {
+      loveLetter: false,
+      photoAlbum: false,
+      timeline: false,
+      quiz: false,
+    }
   };
 
   instances.set(id, newInstance);
@@ -48,6 +54,18 @@ export async function saveLoveLetter(instanceId: string, letter: string): Promis
     instance.loveLetters = [];
   }
   instance.loveLetters.push(letter);
+  if (instance.checklist) {
+    instance.checklist.loveLetter = true;
+  }
   instances.set(instanceId, instance);
   return true;
+}
+
+export async function updateChecklistItem(instanceId: string, item: keyof Checklist): Promise<boolean> {
+    const instance = await getInstance(instanceId);
+    if (!instance || !instance.checklist) return false;
+
+    instance.checklist[item] = true;
+    instances.set(instanceId, instance);
+    return true;
 }

@@ -5,6 +5,7 @@ import { Camera, Heart, Milestone, Puzzle, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { getInstance } from '@/services/instanceService';
 import { notFound } from 'next/navigation';
+import CompletionChecklist from '@/components/CompletionChecklist';
 
 export default async function InstanceHomePage({ params }: { params: { instanceId: string } }) {
   const instance = await getInstance(params.instanceId);
@@ -41,8 +42,8 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-6 md:p-8">
-      <div className="text-center mb-12">
+    <div className="flex flex-col items-center min-h-screen bg-background p-4 sm:p-6 md:p-8">
+      <div className="text-center my-12">
         <div className="flex justify-center items-center mb-4">
           <Heart className="h-12 w-12 text-primary" />
         </div>
@@ -73,6 +74,10 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
             </CardContent>
           </Card>
         ))}
+      </div>
+      
+      <div className="w-full max-w-4xl mb-12">
+        <CompletionChecklist checklist={instance.checklist} />
       </div>
     </div>
   );

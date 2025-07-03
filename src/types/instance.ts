@@ -16,6 +16,14 @@ export const TimelineEventSchema = z.object({
 });
 export type TimelineEvent = z.infer<typeof TimelineEventSchema>;
 
+export const ChecklistSchema = z.object({
+  loveLetter: z.boolean(),
+  photoAlbum: z.boolean(),
+  timeline: z.boolean(),
+  quiz: z.boolean(),
+});
+export type Checklist = z.infer<typeof ChecklistSchema>;
+
 export const InstanceDataSchema = z.object({
   id: z.string(),
   creatorName: z.string(),
@@ -23,5 +31,6 @@ export const InstanceDataSchema = z.object({
   loveLetters: z.array(z.string()).optional(),
   photos: z.array(PhotoSchema).optional(),
   timelineEvents: z.array(TimelineEventSchema).optional(),
+  checklist: ChecklistSchema.optional(),
 });
 export type InstanceData = z.infer<typeof InstanceDataSchema>;
