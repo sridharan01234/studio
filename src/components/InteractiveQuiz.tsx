@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -67,10 +68,11 @@ export default function InteractiveQuiz({ instanceId }: { instanceId: string }) 
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const router = useRouter();
 
   const progress = (currentQuestionIndex / quizQuestions.length) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selectedAnswer) {
       const newAnswers = [...answers, selectedAnswer]
       setAnswers(newAnswers);
@@ -79,7 +81,8 @@ export default function InteractiveQuiz({ instanceId }: { instanceId: string }) 
         setSelectedAnswer(null);
       } else {
         setShowResults(true);
-        updateChecklistItem(instanceId, 'quiz');
+        await updateChecklistItem(instanceId, 'quiz');
+        router.refresh();
       }
     }
   };

@@ -1,7 +1,7 @@
+
 'use server';
 
 import type { InstanceData, Checklist, TimelineEvent, Photo } from '@/types/instance';
-import { revalidatePath } from 'next/cache';
 
 // In-memory store (for prototyping purposes, data will be lost on server restart)
 const instances = new Map<string, InstanceData>();
@@ -48,8 +48,6 @@ export async function saveLoveLetter(instanceId: string, letter: string): Promis
     instance.checklist.loveLetter = true;
   }
   instances.set(instanceId, instance);
-  revalidatePath(`/${instanceId}/love-letter`);
-  revalidatePath(`/${instanceId}`);
   return true;
 }
 
@@ -61,7 +59,6 @@ export async function updateChecklistItem(instanceId: string, item: keyof Checkl
       instance.checklist[item] = true;
       instances.set(instanceId, instance);
     }
-    revalidatePath(`/${instanceId}`);
     return true;
 }
 
@@ -77,8 +74,6 @@ export async function addTimelineEvent(instanceId: string, event: TimelineEvent)
     instance.checklist.timeline = true;
   }
   instances.set(instanceId, instance);
-  revalidatePath(`/${instanceId}/timeline`);
-  revalidatePath(`/${instanceId}`);
   return true;
 }
 
@@ -94,7 +89,5 @@ export async function addPhoto(instanceId: string, photo: Photo): Promise<boolea
     instance.checklist.photoAlbum = true;
   }
   instances.set(instanceId, instance);
-  revalidatePath(`/${instanceId}/photo-album`);
-  revalidatePath(`/${instanceId}`);
   return true;
 }
