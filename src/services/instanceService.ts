@@ -65,7 +65,9 @@ export async function updateChecklistItem(instanceId: string, item: keyof Checkl
     const instance = await getInstance(instanceId);
     if (!instance || !instance.checklist) return false;
 
-    instance.checklist[item] = true;
-    instances.set(instanceId, instance);
+    if (instance.checklist[item] === false) {
+      instance.checklist[item] = true;
+      instances.set(instanceId, instance);
+    }
     return true;
 }

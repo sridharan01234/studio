@@ -55,6 +55,10 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
         </p>
       </div>
 
+      <div className="w-full max-w-4xl mb-12">
+        <CompletionChecklist checklist={instance.checklist} />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 w-full max-w-4xl">
         {features.map((feature) => (
           <Card key={feature.title} className="hover:shadow-xl transition-shadow duration-300 border-2 border-transparent hover:border-primary/50">
@@ -76,9 +80,6 @@ export default async function InstanceHomePage({ params }: { params: { instanceI
         ))}
       </div>
       
-      <div className="w-full max-w-4xl mb-12">
-        <CompletionChecklist checklist={instance.checklist} />
-      </div>
     </div>
   );
 }

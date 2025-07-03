@@ -96,13 +96,11 @@ export default function InteractiveQuiz({ instanceId }: { instanceId: string }) 
     // Note: answers state might not be updated yet when this is called in the same render cycle
     // as setShowResults(true), so we use the `newAnswers` from handleNext logic if we were to calculate
     // it there. Here, we can rely on the final answer being in selectedAnswer.
-    const finalAnswers = [...answers, selectedAnswer];
+    const finalAnswers = [...answers, selectedAnswer].filter(Boolean) as string[];
     finalAnswers.forEach(answer => {
-      if (answer) {
-        counts[answer] = (counts[answer] || 0) + 1;
-      }
+      counts[answer] = (counts[answer] || 0) + 1;
     });
-    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b, 'Words of Affirmation');
   };
 
 
