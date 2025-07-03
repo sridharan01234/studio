@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -61,15 +60,24 @@ export default function LoveLetterForm({ instance }: { instance: InstanceData })
     setLoveLetter("");
     try {
       const result = await generateLoveLetter(values);
-      setLoveLetter(result.loveLetter);
-      await saveLoveLetter(instance.id, result.loveLetter);
-      // Refresh the page to show the new letter in the list
-      router.refresh();
-    } catch (error) {
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      if (result.loveLetter) {
+        setLoveLetter(result.loveLetter);
+        await saveLoveLetter(instance.id, result.loveLetter);
+        router.refresh();
+      } else {
+        throw new Error("The generated love letter was empty.");
+      }
+
+    } catch (error: any) {
       console.error(error);
       toast({
         title: "Error",
-        description: "Failed to generate love letter. Please try again.",
+        description: error.message || "Failed to generate love letter. Please try again.",
         variant: "destructive",
       });
     } finally {
