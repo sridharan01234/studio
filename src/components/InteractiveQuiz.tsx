@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Award, Gift, Handshake, MessageSquare, Clock, Repeat } from 'lucide-react';
+import { Award, Gift, Handshake, MessageSquare, Clock, Repeat, Heart } from 'lucide-react';
 
 const quizQuestions = [
   {
