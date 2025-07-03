@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Heart, Loader2 } from 'lucide-react';
 import { createInstance } from '@/services/instanceService';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CreateInstancePage() {
   const [yourName, setYourName] = useState('');
   const [partnerName, setPartnerName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,10 +26,23 @@ export default function CreateInstancePage() {
     setIsLoading(true);
     try {
       const newInstance = await createInstance(yourName, partnerName);
-      router.push(`/${newInstance.id}`);
+      if (newInstance) {
+        router.push(`/${newInstance.id}`);
+      } else {
+        toast({
+          title: 'Creation Failed',
+          description: 'Could not connect to the database. Please check your connection and Firebase setup.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error("Failed to create instance", error);
-      // TODO: Add user-facing error handling
+      toast({
+          title: 'An Error Occurred',
+          description: 'Something went wrong. Please try again later.',
+          variant: 'destructive',
+      });
       setIsLoading(false);
     }
   };

@@ -16,7 +16,7 @@ import { differenceInDays } from 'date-fns';
 
 const INSTANCES_COLLECTION = 'instances';
 
-export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData> {
+export async function createInstance(creatorName: string, partnerName:string): Promise<InstanceData | null> {
   const newInstanceData = {
     creatorName,
     partnerName,
@@ -40,7 +40,7 @@ export async function createInstance(creatorName: string, partnerName:string): P
     };
   } catch (error) {
     console.error('Firestore connection error in createInstance:', error);
-    throw new Error('Failed to create instance. Could not connect to the database. Please check server logs and Firebase configuration.');
+    return null;
   }
 }
 
@@ -107,7 +107,7 @@ export async function updateChecklistItem(instanceId: string, item: keyof Checkl
         
         const allComplete = Object.values(updatedChecklist).every(Boolean);
 
-        if (allComplete) {
+        if (allComplete && !instance.completedAt) {
             updatePayload.completedAt = new Date().toISOString();
         }
 
