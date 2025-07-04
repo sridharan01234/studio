@@ -10,31 +10,41 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Log the raw environment variables being read by the server for debugging.
-console.log('--- Firebase Config Debug ---');
-console.log('API Key Loaded:', process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? 'Yes' : 'No');
-console.log('Project ID Loaded:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? 'Yes' : 'No');
-console.log('---------------------------');
+// Singleton instance of Firestore
+let db: Firestore | undefined = undefined;
 
-let app: FirebaseApp | undefined;
-let db: Firestore | undefined;
-let firebaseInitializationError: string | null = null;
+function initializeFirebase(): Firestore {
+  console.log("Attempting to initialize Firebase...");
 
-const configValues = Object.values(firebaseConfig);
-const missingKeys = Object.keys(firebaseConfig).filter((key, i) => !configValues[i] || String(configValues[i]).includes('YOUR_'));
+  const missingKeys = Object.entries(firebaseConfig)
+    .filter(([, value]) => !value || String(value).includes('YOUR_'))
+    .map(([key]) => key.replace('NEXT_PUBLIC_FIREBASE_', ''));
 
-if (missingKeys.length > 0) {
-  const errorMessage = `Firebase config is incomplete. Missing or placeholder values for: ${missingKeys.map(k => k.replace('NEXT_PUBLIC_FIREBASE_', '')).join(', ')}. Please check your .env file.`;
-  firebaseInitializationError = errorMessage;
-  console.log(errorMessage);
-} else {
-  try {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app);
-  } catch (e: any) {
-    firebaseInitializationError = `Failed to initialize Firebase: ${e.message}`;
-    console.error(firebaseInitializationError, e);
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `Firebase config is incomplete. Missing or placeholder values for: ${missingKeys.join(
+        ', '
+      )}. Please check your .env file and restart the server.`
+    );
   }
+  
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  console.log('--- Firebase Initialized Successfully ---');
+  console.log('Project ID:', firebaseConfig.projectId);
+  console.log('------------------------------------');
+  return getFirestore(app);
 }
 
-export { db, firebaseInitializationError };
+// This function will be the single source of truth for getting the database instance.
+export function getDb(): Firestore {
+  if (!db) {
+    try {
+        db = initializeFirebase();
+    } catch(e) {
+        console.error('--- Firebase Initialization Failed ---');
+        // rethrow to be caught by services
+        throw e;
+    }
+  }
+  return db;
+}
