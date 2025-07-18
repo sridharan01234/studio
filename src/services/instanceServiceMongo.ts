@@ -63,39 +63,7 @@ export async function createInstance(
   });
 }
 
-export async function getInstance(instanceId: string): Promise<InstanceData | null> {
-  try {
-    if (!ObjectId.isValid(instanceId)) {
-      throw new Error('Invalid instance ID format');
-    }
-
-    const collection = await getInstancesCollection();
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    
-    if (!doc) {
-      return null;
-    }
-
-    // Check if instance is expired (more than 3 days after completion)
-    if (doc.completedAt) {
-      const completedDate = new Date(doc.completedAt);
-      const daysSinceCompletion = differenceInDays(new Date(), completedDate);
-
-      if (daysSinceCompletion > 3) {
-        await collection.deleteOne({ _id: new ObjectId(instanceId) });
-        return null;
-      }
-    }
-
-    return documentToInstanceData(doc);
-  } catch (error: any) {
-    console.error('Database operation error:', error.message);
-    return null;
-  }
-}
-
-// New function with error handling for other operations
-export async function getInstanceWithError(instanceId: string): Promise<{ data: InstanceData | null; error: string | null }> {
+export async function getInstance(instanceId: string): Promise<{ data: InstanceData | null; error: string | null }> {
   return executeDatabaseOperation(async () => {
     if (!ObjectId.isValid(instanceId)) {
       throw new Error('Invalid instance ID format');
@@ -112,16 +80,6 @@ export async function getInstanceWithError(instanceId: string): Promise<{ data: 
   });
 }
 
-// Legacy function for compatibility with existing code
-export async function getInstanceLegacy(instanceId: string): Promise<InstanceData | null> {
-  const { data, error } = await getInstanceWithError(instanceId);
-  if (error) {
-    console.error('Error getting instance:', error);
-    return null;
-  }
-  return data;
-}
-
 export async function updateInstance(
   instanceId: string, 
   updateData: Partial<Omit<InstanceDocument, '_id' | 'createdAt'>>
@@ -133,23 +91,22 @@ export async function updateInstance(
 
     const collection = await getInstancesCollection();
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
       { 
         $set: {
           ...updateData,
           updatedAt: new Date(),
         }
-      }
+      },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found or update failed');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
 }
 
@@ -180,54 +137,24 @@ export async function addLoveLetter(
 
     const collection = await getInstancesCollection();
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
       { 
-        $push: { loveLetters: loveLetter } as any,
+        $push: { loveLetters: loveLetter },
         $set: { 
-          "checklist.loveLetter": true,
+          'checklist.loveLetter': true,
           updatedAt: new Date()
         }
-      }
+      },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
-}
-
-// Legacy function for compatibility
-export async function saveLoveLetter(instanceId: string, letter: string): Promise<boolean> {
-  const { data, error } = await addLoveLetter(instanceId, letter);
-  if (error) {
-    console.error('Error saving love letter:', error);
-    return false;
-  }
-  return true;
-}
-
-// Legacy function for compatibility  
-export async function updateChecklistItem(instanceId: string, item: keyof Checklist): Promise<boolean> {
-  const { data, error } = await updateChecklist(instanceId, { [item]: true });
-  if (error) {
-    console.error('Error updating checklist item:', error);
-    return false;
-  }
-  
-  // Check if all items are complete and mark instance as complete
-  if (data?.checklist) {
-    const allComplete = Object.values(data.checklist).every(Boolean);
-    if (allComplete && !data.completedAt) {
-      await markInstanceComplete(instanceId);
-    }
-  }
-  
-  return true;
 }
 
 export async function addPhoto(
@@ -241,24 +168,23 @@ export async function addPhoto(
 
     const collection = await getInstancesCollection();
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
       { 
-        $push: { photos: photo } as any,
+        $push: { photos: photo },
         $set: { 
-          "checklist.photoAlbum": true,
+          'checklist.photoAlbum': true,
           updatedAt: new Date()
         }
-      }
+      },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
 }
 
@@ -273,24 +199,23 @@ export async function addTimelineEvent(
 
     const collection = await getInstancesCollection();
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
       { 
-        $push: { timelineEvents: event } as any,
+        $push: { timelineEvents: event },
         $set: { 
-          "checklist.timeline": true,
+          'checklist.timeline': true,
           updatedAt: new Date()
         }
-      }
+      },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
 }
 
@@ -311,18 +236,17 @@ export async function updateChecklist(
       updateFields[`checklist.${key}`] = value;
     });
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
-      { $set: updateFields }
+      { $set: updateFields },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
 }
 
@@ -334,32 +258,31 @@ export async function markInstanceComplete(instanceId: string): Promise<{ data: 
 
     const collection = await getInstancesCollection();
     
-    await collection.updateOne(
+    const result = await collection.findOneAndUpdate(
       { _id: new ObjectId(instanceId) },
       { 
         $set: { 
           completedAt: new Date().toISOString(),
           updatedAt: new Date()
         }
-      }
+      },
+      { returnDocument: 'after' }
     );
 
-    // Fetch and return the updated document
-    const doc = await collection.findOne({ _id: new ObjectId(instanceId) });
-    if (!doc) {
+    if (!result) {
       throw new Error('Instance not found');
     }
 
-    return documentToInstanceData(doc);
+    return documentToInstanceData(result);
   });
 }
 
 export async function getCompletionStatus(instanceId: string): Promise<{ data: any | null; error: string | null }> {
   return executeDatabaseOperation(async () => {
-    const instance = await getInstance(instanceId);
+    const { data: instance, error } = await getInstance(instanceId);
     
-    if (!instance) {
-      throw new Error('Instance not found');
+    if (error || !instance) {
+      throw new Error(error || 'Instance not found');
     }
 
     const checklist = instance.checklist || {

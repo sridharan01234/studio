@@ -39,9 +39,9 @@ const FlowOutputSchema = z.object({
 export async function generateLoveLetter(
   input: GenerateLoveLetterInput
 ): Promise<GenerateLoveLetterOutput> {
-  // This is the most common error. Check it first and give a clear message.
-  if (!process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY.includes('YOUR_')) {
-    const errorMessage = "The Google AI API key is not configured. Please add it to your .env file and restart the server.";
+  // Check for OpenAI API key instead of Google API key
+  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('YOUR_')) {
+    const errorMessage = "The OpenAI API key is not configured. Please add OPENAI_API_KEY to your .env file and restart the server.";
     console.error(errorMessage);
     return { error: errorMessage };
   }
@@ -60,9 +60,9 @@ export async function generateLoveLetter(
     let errorMessage = "Failed to generate love letter. An unknown error occurred.";
     if (e instanceof Error) {
         const message = e.message;
-        if (message.includes('API_KEY_INVALID') || message.includes('permission denied')) {
-            errorMessage = "Failed to generate love letter. Your Google AI API key is likely invalid or missing required permissions.";
-        } else if (message.includes('deadline')) {
+        if (message.includes('API_KEY_INVALID') || message.includes('permission denied') || message.includes('401')) {
+            errorMessage = "Failed to generate love letter. Your OpenAI API key is likely invalid or missing required permissions.";
+        } else if (message.includes('deadline') || message.includes('timeout')) {
             errorMessage = "Failed to generate love letter. The request timed out. Please try again.";
         } else {
              // Use the full error message from the thrown Error object.
@@ -77,20 +77,6 @@ export async function generateLoveLetter(
   }
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateLoveLetterPrompt',
-  input: {schema: GenerateLoveLetterInputSchema},
-  output: {schema: FlowOutputSchema},
-  prompt: `You are a professional love letter writer. Please craft a personalized love letter with the following details:
-
-Recipient's Name: {{{recipientName}}}
-Sender's Name: {{{senderName}}}
-Relationship Details: {{{relationshipDetails}}}
-Tone: {{{tone}}}
-
-Please ensure the letter is heartfelt, genuine, and reflects the provided relationship details and desired tone. The letter should be no more than 300 words.`,
-});
-
 const generateLoveLetterFlow = ai.defineFlow(
   {
     name: 'generateLoveLetterFlow',
@@ -98,10 +84,24 @@ const generateLoveLetterFlow = ai.defineFlow(
     outputSchema: FlowOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output) {
+    const result = await ai.generate({
+      model: 'gpt-4o-mini',
+      prompt: `You are a professional love letter writer. Please craft a personalized love letter with the following details:
+
+Recipient's Name: ${input.recipientName}
+Sender's Name: ${input.senderName}
+Relationship Details: ${input.relationshipDetails}
+Tone: ${input.tone}
+
+Please ensure the letter is heartfelt, genuine, and reflects the provided relationship details and desired tone. The letter should be no more than 300 words.`,
+      output: {
+        schema: FlowOutputSchema,
+      },
+    });
+    
+    if (!result.output) {
       throw new Error("The AI model did not return a valid output. This may be due to a content safety policy or a problem with the prompt.");
     }
-    return output;
+    return result.output;
   }
 );

@@ -1,0 +1,15 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: studio_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: studio_app
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --bind_ip_all
+
+volumes:
+  mongodb_data:

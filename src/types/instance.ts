@@ -1,5 +1,6 @@
 
 import { z } from 'zod';
+import { ObjectId } from 'mongodb';
 
 export const PhotoSchema = z.object({
   src: z.string(),
@@ -35,3 +36,22 @@ export const InstanceDataSchema = z.object({
   completedAt: z.string().optional(),
 });
 export type InstanceData = z.infer<typeof InstanceDataSchema>;
+
+// MongoDB specific types
+export interface InstanceDocument extends Omit<InstanceData, 'id'> {
+  _id?: ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Helper function to convert MongoDB document to InstanceData
+export const documentToInstanceData = (doc: InstanceDocument): InstanceData => ({
+  id: doc._id?.toString() || '',
+  creatorName: doc.creatorName,
+  partnerName: doc.partnerName,
+  loveLetters: doc.loveLetters,
+  photos: doc.photos,
+  timelineEvents: doc.timelineEvents,
+  checklist: doc.checklist,
+  completedAt: doc.completedAt,
+});
