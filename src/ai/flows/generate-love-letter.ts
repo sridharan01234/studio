@@ -85,7 +85,7 @@ const generateLoveLetterFlow = ai.defineFlow(
   },
   async input => {
     const result = await ai.generate({
-      model: 'gpt-4o-mini',
+      model: 'openai/gpt-3.5-turbo',
       prompt: `You are a professional love letter writer. Please craft a personalized love letter with the following details:
 
 Recipient's Name: ${input.recipientName}
