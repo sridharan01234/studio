@@ -2,7 +2,9 @@
 import InteractiveQuiz from "@/components/InteractiveQuiz";
 import { Puzzle } from "lucide-react";
 
-export default function QuizzesPage({ params }: { params: { instanceId: string } }) {
+export default async function QuizzesPage({ params }: { params: Promise<{ instanceId: string }> }) {
+  const { instanceId } = await params;
+  
   return (
     <div className="min-h-screen bg-background w-full flex items-center justify-center">
       <div className="container mx-auto px-4 py-12">
@@ -17,7 +19,7 @@ export default function QuizzesPage({ params }: { params: { instanceId: string }
         </div>
 
         <div className="max-w-2xl mx-auto">
-          <InteractiveQuiz instanceId={params.instanceId} />
+          <InteractiveQuiz instanceId={instanceId} />
         </div>
       </div>
     </div>

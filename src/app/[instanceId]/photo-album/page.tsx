@@ -9,11 +9,13 @@ export default async function PhotoAlbumPage({
   params,
   searchParams,
 }: {
-  params: { instanceId: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ instanceId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const instance = await getInstance(params.instanceId);
-  const isPartnerView = searchParams.partner === 'true';
+  const { instanceId } = await params;
+  const searchParamsResolved = await searchParams;
+  const instance = await getInstance(instanceId);
+  const isPartnerView = searchParamsResolved.partner === 'true';
 
   if (!instance) {
     notFound();
@@ -34,7 +36,7 @@ export default async function PhotoAlbumPage({
           </p>
           {!isPartnerView && (
             <div className="mt-8">
-              <AddPhotoForm instanceId={params.instanceId} />
+              <AddPhotoForm instanceId={instanceId} />
             </div>
           )}
         </div>

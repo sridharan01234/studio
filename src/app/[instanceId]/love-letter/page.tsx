@@ -5,8 +5,9 @@ import { getInstance } from '@/services/instanceService';
 import { notFound } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function LoveLetterPage({ params }: { params: { instanceId: string } }) {
-  const instance = await getInstance(params.instanceId);
+export default async function LoveLetterPage({ params }: { params: Promise<{ instanceId: string }> }) {
+  const { instanceId } = await params;
+  const instance = await getInstance(instanceId);
   if (!instance) {
     notFound();
   }

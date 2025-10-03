@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  env: {
+    MONGODB_URI: process.env.MONGODB_URI,
+    MONGODB_DB_NAME: process.env.MONGODB_DB_NAME,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  },
 };
 
 export default nextConfig;

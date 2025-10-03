@@ -9,9 +9,10 @@ export default async function InstanceLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { instanceId: string };
+  params: Promise<{ instanceId: string }>;
 }>) {
-  const instance = await getInstance(params.instanceId);
+  const { instanceId } = await params;
+  const instance = await getInstance(instanceId);
   if (!instance) {
     notFound();
   }

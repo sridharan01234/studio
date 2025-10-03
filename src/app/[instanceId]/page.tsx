@@ -8,9 +8,11 @@ import { notFound } from 'next/navigation';
 import CompletionChecklist from '@/components/CompletionChecklist';
 import ShareCard from '@/components/ShareCard';
 
-export default async function InstanceHomePage({ params, searchParams }: { params: { instanceId: string }, searchParams: { [key: string]: string | string[] | undefined } }) {
-  const instance = await getInstance(params.instanceId);
-  const isPartnerView = searchParams.partner === 'true';
+export default async function InstanceHomePage({ params, searchParams }: { params: Promise<{ instanceId: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const { instanceId } = await params;
+  const searchParamsResolved = await searchParams;
+  const instance = await getInstance(instanceId);
+  const isPartnerView = searchParamsResolved.partner === 'true';
 
   if (!instance) {
     notFound();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,6 +44,20 @@ export default function LoveLetterForm({ instance }: { instance: InstanceData })
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const letterRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to letter when it's generated
+  useEffect(() => {
+    if (loveLetter && letterRef.current) {
+      // Small delay to ensure the element is rendered
+      setTimeout(() => {
+        letterRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }, 100);
+    }
+  }, [loveLetter]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -179,13 +193,19 @@ export default function LoveLetterForm({ instance }: { instance: InstanceData })
       </Card>
 
       {loveLetter && (
-        <Card className="mt-12 shadow-lg border-2 border-primary/50 animate-in fade-in-50 duration-1000">
-          <CardHeader>
-            <CardTitle className="font-headline text-3xl text-center text-primary">Your Newly Generated Letter</CardTitle>
+        <Card 
+          ref={letterRef}
+          className="mt-12 shadow-2xl border-2 border-primary/50 animate-in slide-in-from-bottom-8 fade-in-0 duration-700 bg-gradient-to-br from-background to-primary/5"
+        >
+          <CardHeader className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 animate-pulse" />
+            <CardTitle className="font-headline text-3xl text-center text-primary relative z-10 animate-in fade-in-50 duration-1000">
+              ✨ Your Newly Generated Letter ✨
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="prose-lg max-w-none text-gray-700 whitespace-pre-wrap p-4 bg-primary/5 rounded-lg">
-                <p>{loveLetter}</p>
+          <CardContent className="animate-in fade-in-50 duration-1000 delay-300">
+            <div className="prose-lg max-w-none text-gray-700 whitespace-pre-wrap p-6 bg-white/80 rounded-lg shadow-inner border border-primary/20 backdrop-blur-sm">
+                <p className="leading-relaxed">{loveLetter}</p>
             </div>
           </CardContent>
         </Card>
